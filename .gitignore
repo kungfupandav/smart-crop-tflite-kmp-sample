@@ -17,3 +17,7 @@
 /iosApp/Pods
 *.xcworkspace
 *.xcuserdata
+
+# XcodeGen-generated (source of truth is iosApp/project.yml)
+/iosApp/iosApp.xcodeproj/
+/iosApp/iosApp/Info.plist
