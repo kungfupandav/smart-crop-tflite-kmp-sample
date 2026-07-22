@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.smartcrop.shared.domain.model.Character
+import com.smartcrop.shared.ui.LocalAppGraph
 import com.smartcrop.shared.ui.theme.NeoBox
 import com.smartcrop.shared.ui.theme.NeoButton
 import com.smartcrop.shared.ui.theme.NeoColors
@@ -40,7 +41,8 @@ fun DetailScreen(
     characterId: Int,
     onBack: () -> Unit,
 ) {
-    val viewModel: DetailViewModel = viewModel { DetailViewModel(characterId) }
+    val appGraph = LocalAppGraph.current
+    val viewModel: DetailViewModel = viewModel { DetailViewModel(characterId, appGraph.characterRepository) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Box(

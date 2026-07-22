@@ -25,7 +25,7 @@ data class DetailUiState(
  */
 class DetailViewModel(
     private val characterId: Int,
-    private val repository: CharacterRepository = CharacterRepository(),
+    private val repository: CharacterRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DetailUiState())

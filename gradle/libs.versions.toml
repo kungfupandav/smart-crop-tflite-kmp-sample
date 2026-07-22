@@ -1,20 +1,21 @@
 [versions]
-agp = "8.5.2"
-kotlin = "2.1.0"
-compose-multiplatform = "1.7.3"
+agp = "8.7.3"
+kotlin = "2.2.20"
+compose-multiplatform = "1.9.3"
 ktor = "3.0.3"
 kotlinx-serialization = "1.7.3"
-kotlinx-coroutines = "1.9.0"
-coil = "3.0.4"
-navigation = "2.8.0-alpha10"
-lifecycle = "2.8.4"
+kotlinx-coroutines = "1.10.2"
+coil = "3.1.0"
+navigation = "2.9.0"
+lifecycle = "2.9.4"
 tflite = "2.16.1"
 tflite-gpu = "2.16.1"
 tflite-support = "0.4.4"
 androidx-activityCompose = "1.9.3"
-room = "2.7.1"
-ksp = "2.1.0-1.0.29"
-androidx-sqlite = "2.5.1"
+room = "2.8.4"
+ksp = "2.2.20-2.0.4"
+androidx-sqlite = "2.6.2"
+metro = "0.7.0"
 
 [libraries]
 # Ktor
@@ -65,3 +66,4 @@ composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "k
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 room = { id = "androidx.room", version.ref = "room" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
