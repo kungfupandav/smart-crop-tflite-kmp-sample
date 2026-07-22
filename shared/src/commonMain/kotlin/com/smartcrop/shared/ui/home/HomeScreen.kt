@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.smartcrop.shared.ui.LocalAppGraph
 import com.smartcrop.shared.ui.components.CharacterCard
 import com.smartcrop.shared.ui.theme.NeoButton
 import com.smartcrop.shared.ui.theme.NeoColors
@@ -36,7 +37,8 @@ private const val PREFETCH_THRESHOLD = 4
 fun HomeScreen(
     onCharacterClick: (Int) -> Unit,
 ) {
-    val viewModel: HomeViewModel = viewModel { HomeViewModel() }
+    val appGraph = LocalAppGraph.current
+    val viewModel: HomeViewModel = viewModel { HomeViewModel(appGraph.characterRepository) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
 
