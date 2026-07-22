@@ -16,7 +16,7 @@ struct iOSApp: App {
 
 struct ContentView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
-        MainKt.MainViewController()
+        Main_iosKt.MainViewController()
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
