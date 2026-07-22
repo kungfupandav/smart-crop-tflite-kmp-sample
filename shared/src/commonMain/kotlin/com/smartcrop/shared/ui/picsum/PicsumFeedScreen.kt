@@ -1,4 +1,4 @@
-package com.smartcrop.shared.ui.home
+package com.smartcrop.shared.ui.picsum
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,18 +27,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smartcrop.shared.ui.LocalAppGraph
-import com.smartcrop.shared.ui.components.CharacterCard
+import com.smartcrop.shared.ui.components.PhotoCard
 import com.smartcrop.shared.ui.theme.NeoButton
 import com.smartcrop.shared.ui.theme.NeoColors
 
 private const val PREFETCH_THRESHOLD = 4
 
 @Composable
-fun HomeScreen(
-    onCharacterClick: (Int) -> Unit,
+fun PicsumFeedScreen(
+    onPhotoClick: (String) -> Unit,
 ) {
     val appGraph = LocalAppGraph.current
-    val viewModel: HomeViewModel = viewModel { HomeViewModel(appGraph.characterRepository) }
+    val viewModel: PicsumFeedViewModel = viewModel { PicsumFeedViewModel(appGraph.photoRepository) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
 
@@ -76,7 +76,7 @@ fun HomeScreen(
                 )
             }
 
-            uiState.error != null && uiState.characters.isEmpty() -> {
+            uiState.error != null && uiState.photos.isEmpty() -> {
                 ErrorState(
                     message = uiState.error!!,
                     onRetry = viewModel::retry,
@@ -84,9 +84,9 @@ fun HomeScreen(
                 )
             }
 
-            uiState.characters.isEmpty() -> {
+            uiState.photos.isEmpty() -> {
                 Text(
-                    text = "No characters found.",
+                    text = "No photos found.",
                     style = MaterialTheme.typography.titleMedium,
                     color = NeoColors.Ink,
                     textAlign = TextAlign.Center,
@@ -104,13 +104,13 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     items(
-                        count = uiState.characters.size,
-                        key = { index -> uiState.characters[index].id },
+                        count = uiState.photos.size,
+                        key = { index -> uiState.photos[index].id },
                     ) { index ->
-                        val character = uiState.characters[index]
-                        CharacterCard(
-                            character = character,
-                            onClick = { onCharacterClick(character.id) },
+                        val photo = uiState.photos[index]
+                        PhotoCard(
+                            photo = photo,
+                            onClick = { onPhotoClick(photo.id) },
                         )
                     }
 

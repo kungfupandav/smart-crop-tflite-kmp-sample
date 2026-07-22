@@ -3,9 +3,14 @@ package com.smartcrop.shared.data.repository
 import com.smartcrop.shared.data.api.RickAndMortyApi
 import com.smartcrop.shared.data.model.CharacterDto
 import com.smartcrop.shared.domain.model.Character
+import dev.zacsweers.metro.AppScope
+import dev.zacsweers.metro.Inject
+import dev.zacsweers.metro.SingleIn
 
+@Inject
+@SingleIn(AppScope::class)
 class CharacterRepository(
-    private val api: RickAndMortyApi = RickAndMortyApi()
+    private val api: RickAndMortyApi
 ) {
 
     suspend fun getCharacters(page: Int): Pair<List<Character>, Boolean> {

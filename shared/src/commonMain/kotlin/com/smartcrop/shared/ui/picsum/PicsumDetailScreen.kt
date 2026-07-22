@@ -1,4 +1,4 @@
-package com.smartcrop.shared.ui.detail
+package com.smartcrop.shared.ui.picsum
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -21,28 +21,30 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.smartcrop.shared.domain.model.Character
+import com.smartcrop.shared.domain.model.Photo
 import com.smartcrop.shared.ui.LocalAppGraph
 import com.smartcrop.shared.ui.theme.NeoBox
 import com.smartcrop.shared.ui.theme.NeoButton
 import com.smartcrop.shared.ui.theme.NeoColors
 import com.smartcrop.shared.ui.theme.NeoPill
 import com.smartcrop.shared.ui.theme.NeoStatCard
+import kotlin.math.roundToInt
 
 @Composable
-fun DetailScreen(
-    characterId: Int,
+fun PicsumDetailScreen(
+    photoId: String,
     onBack: () -> Unit,
 ) {
     val appGraph = LocalAppGraph.current
-    val viewModel: DetailViewModel = viewModel { DetailViewModel(characterId, appGraph.characterRepository) }
+    val viewModel: PicsumDetailViewModel = viewModel {
+        PicsumDetailViewModel(photoId, appGraph.photoRepository)
+    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Box(
@@ -67,9 +69,9 @@ fun DetailScreen(
                 )
             }
 
-            uiState.character != null -> {
+            uiState.photo != null -> {
                 DetailContent(
-                    character = uiState.character!!,
+                    photo = uiState.photo!!,
                     onBack = onBack,
                 )
             }
@@ -79,7 +81,7 @@ fun DetailScreen(
 
 @Composable
 private fun DetailContent(
-    character: Character,
+    photo: Photo,
     onBack: () -> Unit,
 ) {
     Column(
@@ -95,52 +97,50 @@ private fun DetailContent(
             onClick = onBack,
         )
 
-        // Full, uncropped character portrait.
+        // Full, uncropped photo at its native aspect ratio.
         NeoBox(
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = NeoColors.Cream,
             contentPadding = PaddingValues(10.dp),
         ) {
             AsyncImage(
-                model = character.imageUrl,
-                contentDescription = character.name,
+                model = photo.detailUrl(),
+                contentDescription = "Photo by ${photo.author}",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(1f)
+                    .aspectRatio(photo.width.toFloat() / photo.height)
                     .clip(RoundedCornerShape(10.dp)),
             )
         }
 
         Text(
-            text = character.name,
+            text = photo.author,
             style = MaterialTheme.typography.headlineSmall,
             color = NeoColors.Ink,
         )
 
         NeoPill(
-            text = character.status.uppercase(),
-            backgroundColor = statusColor(character.status),
+            text = "PICSUM #${photo.id}",
+            backgroundColor = NeoColors.BluePill,
         )
 
-        // 2-column grid of metadata stat cards built from weighted rows so it
-        // scrolls inside the parent Column (LazyVerticalGrid can't nest here).
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             NeoStatCard(
-                label = "Species",
-                value = character.species.ifBlank { "Unknown" },
-                caption = "Species",
+                label = "Width",
+                value = "${photo.width}",
+                caption = "Pixels",
                 headerColor = NeoColors.OrangeHead,
                 bodyColor = NeoColors.OrangeBody,
                 modifier = Modifier.weight(1f),
             )
             NeoStatCard(
-                label = "Gender",
-                value = character.gender.ifBlank { "Unknown" },
-                caption = "Gender",
+                label = "Height",
+                value = "${photo.height}",
+                caption = "Pixels",
                 headerColor = NeoColors.MagentaHead,
                 bodyColor = NeoColors.MagentaBody,
                 modifier = Modifier.weight(1f),
@@ -152,17 +152,17 @@ private fun DetailContent(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             NeoStatCard(
-                label = "Origin",
-                value = character.originName.ifBlank { "Unknown" },
-                caption = "Origin",
+                label = "Aspect",
+                value = aspectRatioLabel(photo.width, photo.height),
+                caption = "Width ÷ height",
                 headerColor = NeoColors.CyanHead,
                 bodyColor = NeoColors.CyanBody,
                 modifier = Modifier.weight(1f),
             )
             NeoStatCard(
-                label = "Location",
-                value = character.locationName.ifBlank { "Unknown" },
-                caption = "Last seen",
+                label = "ID",
+                value = photo.id,
+                caption = "Picsum",
                 headerColor = NeoColors.LimeHead,
                 bodyColor = NeoColors.LimeBody,
                 modifier = Modifier.weight(1f),
@@ -170,9 +170,9 @@ private fun DetailContent(
         }
 
         NeoStatCard(
-            label = "Episodes",
-            value = character.episodeCount.toString(),
-            caption = "Appearances",
+            label = "Source",
+            value = sourceHost(photo.sourceUrl),
+            caption = "Original photographer",
             headerColor = NeoColors.OrangeHead,
             bodyColor = NeoColors.OrangeBody,
             modifier = Modifier.fillMaxWidth(),
@@ -211,8 +211,15 @@ private fun ErrorState(
     }
 }
 
-private fun statusColor(status: String): Color = when (status.lowercase()) {
-    "alive" -> NeoColors.Green
-    "dead" -> NeoColors.Coral
-    else -> NeoColors.Yellow
+/** e.g. 1.50 for a 3:2 photo. Rounded to two decimals; common-safe (no String.format). */
+private fun aspectRatioLabel(width: Int, height: Int): String {
+    if (height <= 0) return "—"
+    val hundredths = (width.toDouble() / height * 100).roundToInt()
+    val whole = hundredths / 100
+    val frac = (hundredths % 100).toString().padStart(2, '0')
+    return "$whole.$frac"
 }
+
+/** "https://unsplash.com/photos/x" -> "unsplash.com". */
+private fun sourceHost(url: String): String =
+    url.substringAfter("://").substringBefore("/").ifBlank { url }

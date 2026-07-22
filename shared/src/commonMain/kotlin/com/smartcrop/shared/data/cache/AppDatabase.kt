@@ -27,7 +27,7 @@ expect object AppDatabaseConstructor : RoomDatabaseConstructor<AppDatabase> {
 fun buildDatabase(builder: RoomDatabase.Builder<AppDatabase>): AppDatabase =
     builder
         .setDriver(BundledSQLiteDriver())
-        // Dispatchers.IO is JVM-only in kotlinx-coroutines 1.9.0 (it became a
-        // common/Native API only in 1.10.0), so use Default for KMP compatibility.
+        // Dispatchers.IO is JVM-only (still internal on Kotlin/Native as of
+        // kotlinx-coroutines 1.10.2), so use Default for KMP compatibility.
         .setQueryCoroutineContext(Dispatchers.Default)
         .build()

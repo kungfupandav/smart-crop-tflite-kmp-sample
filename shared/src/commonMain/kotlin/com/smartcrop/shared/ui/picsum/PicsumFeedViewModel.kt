@@ -1,9 +1,9 @@
-package com.smartcrop.shared.ui.home
+package com.smartcrop.shared.ui.picsum
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.smartcrop.shared.data.repository.CharacterRepository
-import com.smartcrop.shared.domain.model.Character
+import com.smartcrop.shared.data.repository.PhotoRepository
+import com.smartcrop.shared.domain.model.Photo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Immutable UI state for the character feed.
+ * Immutable UI state for the Picsum photo feed.
  */
-data class HomeUiState(
-    val characters: List<Character> = emptyList(),
+data class PicsumFeedUiState(
+    val photos: List<Photo> = emptyList(),
     val isLoading: Boolean = false,      // first-page load
     val isLoadingMore: Boolean = false,  // subsequent pages
     val endReached: Boolean = false,
@@ -22,15 +22,16 @@ data class HomeUiState(
 )
 
 /**
- * Holds the paging state for the home feed. Loads page 1 on init and appends
- * further pages as [loadNextPage] is called from the scroll observer.
+ * Paging state for the Picsum feed. Loads page 1 on init and appends further
+ * pages as [loadNextPage] is called from the scroll observer. Mirrors
+ * [com.smartcrop.shared.ui.home.HomeViewModel].
  */
-class HomeViewModel(
-    private val repository: CharacterRepository,
+class PicsumFeedViewModel(
+    private val repository: PhotoRepository,
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+    private val _uiState = MutableStateFlow(PicsumFeedUiState())
+    val uiState: StateFlow<PicsumFeedUiState> = _uiState.asStateFlow()
 
     // The page currently being requested (or last successfully loaded).
     private var currentPage = 1
@@ -41,16 +42,16 @@ class HomeViewModel(
     }
 
     /**
-     * Loads the next page of characters. Guards against concurrent requests and
-     * against loading past the end of the list. Distinguishes the first-page
-     * load ([HomeUiState.isLoading]) from subsequent loads
-     * ([HomeUiState.isLoadingMore]).
+     * Loads the next page of photos. Guards against concurrent requests and
+     * against loading past the end of the catalog. Distinguishes the first-page
+     * load ([PicsumFeedUiState.isLoading]) from subsequent loads
+     * ([PicsumFeedUiState.isLoadingMore]).
      */
     fun loadNextPage() {
         val state = _uiState.value
         if (isRequestInFlight || state.endReached) return
 
-        val isFirstPage = state.characters.isEmpty()
+        val isFirstPage = state.photos.isEmpty()
         isRequestInFlight = true
         _uiState.update {
             it.copy(
@@ -62,10 +63,10 @@ class HomeViewModel(
 
         viewModelScope.launch {
             try {
-                val (newCharacters, hasMore) = repository.getCharacters(currentPage)
+                val (newPhotos, hasMore) = repository.getPhotos(currentPage)
                 _uiState.update {
                     it.copy(
-                        characters = it.characters + newCharacters,
+                        photos = it.photos + newPhotos,
                         isLoading = false,
                         isLoadingMore = false,
                         endReached = !hasMore,
@@ -87,9 +88,7 @@ class HomeViewModel(
         }
     }
 
-    /**
-     * Clears the current error and retries loading the page that failed.
-     */
+    /** Clears the current error and retries loading the page that failed. */
     fun retry() {
         if (isRequestInFlight) return
         _uiState.update { it.copy(error = null) }
