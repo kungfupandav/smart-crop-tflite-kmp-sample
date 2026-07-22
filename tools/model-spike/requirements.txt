@@ -1,0 +1,17 @@
+# Model-spike toolchain. Use Python 3.12 (TensorFlow/LiteRT have no 3.14 wheels).
+#   python3.12 -m venv venv && ./venv/bin/pip install -r requirements.txt
+#
+# Inference-only (running run_spike.py against the committed .tflite):
+numpy
+pillow
+ai-edge-litert          # LiteRT interpreter (the app's on-device runtime)
+
+# Conversion-only (regenerating the .tflite from ONNX — see convert.sh):
+onnxruntime             # parity checks vs the source ONNX
+onnx
+onnxslim                # fold dynamic Resize shapes to static (required)
+onnx2tf                 # ONNX -> TFLite (NCHW -> NHWC)
+onnx-graphsurgeon
+sng4onnx
+tensorflow
+tf_keras
