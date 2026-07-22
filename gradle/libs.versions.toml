@@ -12,6 +12,9 @@ tflite = "2.16.1"
 tflite-gpu = "2.16.1"
 tflite-support = "0.4.4"
 androidx-activityCompose = "1.9.3"
+room = "2.7.1"
+ksp = "2.1.0-1.0.29"
+androidx-sqlite = "2.5.1"
 
 [libraries]
 # Ktor
@@ -45,6 +48,11 @@ tflite-support = { module = "org.tensorflow:tensorflow-lite-support", version.re
 # AndroidX
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 
+# Room (Multiplatform)
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
+androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidx-sqlite" }
+
 # Testing
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 
@@ -55,3 +63,5 @@ kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref =
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "compose-multiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+room = { id = "androidx.room", version.ref = "room" }
