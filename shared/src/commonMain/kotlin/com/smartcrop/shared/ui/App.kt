@@ -13,7 +13,10 @@ import coil3.compose.setSingletonImageLoaderFactory
 import coil3.network.ktor3.KtorNetworkFetcherFactory
 import com.smartcrop.shared.di.AppGraph
 import com.smartcrop.shared.ui.detail.DetailScreen
+import com.smartcrop.shared.ui.entry.EntryScreen
 import com.smartcrop.shared.ui.home.HomeScreen
+import com.smartcrop.shared.ui.picsum.PicsumDetailScreen
+import com.smartcrop.shared.ui.picsum.PicsumFeedScreen
 import com.smartcrop.shared.ui.theme.SmartCropTheme
 import dev.zacsweers.metro.createGraph
 
@@ -43,7 +46,16 @@ fun App() {
         SmartCropTheme {
             val navController = rememberNavController()
 
-            NavHost(navController = navController, startDestination = HomeRoute) {
+            NavHost(navController = navController, startDestination = EntryRoute) {
+                // Landing: choose a feed.
+                composable<EntryRoute> {
+                    EntryScreen(
+                        onRickAndMorty = { navController.navigate(HomeRoute) },
+                        onPicsum = { navController.navigate(PicsumFeedRoute) },
+                    )
+                }
+
+                // --- Rick & Morty flow ---
                 composable<HomeRoute> {
                     HomeScreen(
                         onCharacterClick = { id ->
@@ -55,6 +67,22 @@ fun App() {
                     val route = backStackEntry.toRoute<DetailRoute>()
                     DetailScreen(
                         characterId = route.characterId,
+                        onBack = { navController.popBackStack() }
+                    )
+                }
+
+                // --- Picsum flow ---
+                composable<PicsumFeedRoute> {
+                    PicsumFeedScreen(
+                        onPhotoClick = { id ->
+                            navController.navigate(PicsumDetailRoute(photoId = id))
+                        }
+                    )
+                }
+                composable<PicsumDetailRoute> { backStackEntry ->
+                    val route = backStackEntry.toRoute<PicsumDetailRoute>()
+                    PicsumDetailScreen(
+                        photoId = route.photoId,
                         onBack = { navController.popBackStack() }
                     )
                 }

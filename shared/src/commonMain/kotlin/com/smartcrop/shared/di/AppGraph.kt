@@ -1,6 +1,7 @@
 package com.smartcrop.shared.di
 
 import com.smartcrop.shared.data.repository.CharacterRepository
+import com.smartcrop.shared.data.repository.PhotoRepository
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Provides
@@ -24,6 +25,9 @@ interface AppGraph {
     /** Accessor exposed to the UI layer; backing [RickAndMortyApi] + [HttpClient]
      *  are resolved and scoped by Metro. */
     val characterRepository: CharacterRepository
+
+    /** Accessor for the Picsum feed; backing [PicsumApi] shares the [HttpClient]. */
+    val photoRepository: PhotoRepository
 
     /**
      * The shared Ktor client. Uses the platform's auto-discovered engine
