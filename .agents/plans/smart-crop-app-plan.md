@@ -100,8 +100,13 @@ Pipeline:
 ### Inference Caching
 
 - Inference is deterministic per image URL, so cache `CropRegion` keyed by image URL.
-- In-memory LRU cache + optional persistent store (SQLDelight table).
+- In-memory LRU cache + optional persistent store (Room KMP table).
 - Each image is analyzed once, ever — keeps scrolling smooth.
+
+**Room KMP setup:**
+- Apply the `androidx.room` Gradle plugin + KSP for every target (`kspAndroid`, `kspIosX64`, `kspIosArm64`, `kspIosSimulatorArm64`); depend on `room-runtime` and `sqlite-bundled` in `commonMain`.
+- Define a `@Database`/`@Entity` (`CropRegionEntity` keyed by image URL) and a `@Dao` in `commonMain`.
+- Provide the builder per platform via expect/actual: `Room.databaseBuilder<AppDatabase>(...)` with a platform path (Android `context.getDatabasePath(...)`, iOS `NSDocumentDirectory`), `.setDriver(BundledSQLiteDriver())`, and `.setQueryCoroutineContext(Dispatchers.IO)`.
 
 ---
 
@@ -210,7 +215,7 @@ Pipeline:
 | Rick & Morty avatars are already 300×300 tight portraits; smart crop effect may be subtle | Low visual payoff | Use non-square cell aspect ratio (16:9 or 2:1) so the crop decision is clearly visible |
 | U²-Netp trained on natural images; may underperform on cartoon art | Poor saliency results | Test early in Milestone 3; BlazeFace as fallback for portrait-heavy content |
 | iOS TFLite cinterop is complex and fragile | iOS delays | Budget extra time; consider TensorFlowLiteSwift pod as an easier alternative |
-| Inference per image adds scroll latency | Jank | Cache results aggressively (LRU + SQLDelight); run inference off-screen; bounded dispatcher |
+| Inference per image adds scroll latency | Jank | Cache results aggressively (LRU + Room KMP); run inference off-screen; bounded dispatcher |
 
 ---
 
