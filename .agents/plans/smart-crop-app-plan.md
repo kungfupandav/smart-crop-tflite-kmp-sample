@@ -56,7 +56,8 @@ shared/
     components/
       SmartCropImage.kt        → Composable that renders cropped source rect
     theme/
-      Theme.kt                 → MaterialTheme customization
+      Theme.kt                 → Neo-brutalist MaterialTheme (colors + Fredoka type)
+      NeoComponents.kt         → NeoBox / NeoButton / NeoPill / NeoStatCard
 
 androidApp/
   MainActivity.kt              → Android entry point
@@ -66,6 +67,50 @@ iosApp/
   iOSApp.swift                 → iOS entry point
   SaliencyEngine.ios.kt        → actual: TFLite C API via cinterop + Metal delegate
 ```
+
+---
+
+## Design System — Neo-Brutalist
+
+Adopt the neo-brutalist visual language from the `eat-please-app` KMP project (`ui/theme/EatPleaseTheme.kt` + `NeoComponents.kt`). It's a flat, high-contrast, hard-shadow look — no elevation blur, no gradients, no dark mode. Port the two theme files into `shared/ui/theme/` (rename `EatPleaseTheme` → `SmartCropTheme`) and reuse the components as-is.
+
+### Principles
+
+- **Flat + hard-edged.** Every surface is a bordered block sitting above a *hard, non-blurred* ink shadow offset down-right. No Material elevation/shadows.
+- **Single light-committed theme.** The look is a deliberate one-world design — do **not** add a dark scheme.
+- **Hue carries meaning.** A warm cream ground with black ink for all borders/shadows; saturated blocks whose color signals state, plus decorative header+body color pairs for section cards.
+
+### Palette (`NeoColors`)
+
+| Token | Hex | Role |
+|---|---|---|
+| `Cream` / `CreamDeep` | `#FBE7D6` / `#F5D9C4` | Background / surface variant |
+| `Ink` | `#0B0B0B` | All borders, shadows, text |
+| `Green` | `#88E88C` | Positive / steady state |
+| `Coral` | `#FF7059` | Attention / error |
+| `Yellow` | `#FFD60A` | Selected / highlight accent |
+| Head/Body pairs | Orange · Magenta · Cyan · Lime | Decorative section cards (header strip + lighter body) |
+
+Wired into a Material 3 `lightColorScheme`: `primary = Ink`, `background/surface = Cream`, `outline = Ink`, `error = Coral`.
+
+### Typography
+
+- **Fredoka** family (Regular/Medium/SemiBold/Bold) — bundle the four `.ttf` files into `commonMain/composeResources/font/`.
+- Chunky hierarchy: display + headline at **Bold**, titles + labels at **SemiBold**, body at **Medium**.
+
+### Components (`NeoComponents.kt`)
+
+- **`NeoBox`** — the signature primitive: rounded (16dp) bordered face (3dp ink border) over a hard ink shadow (4dp offset). When clickable, pressing slides the face down-right by exactly the shadow offset over a 70ms tween so it reads as physically pressed, then springs back. Display cards keep the shadow but never move.
+- **`NeoButton`** — full-width chunky action (down-scaled `NeoBox`), for retry / load-more actions.
+- **`NeoPill`** — small highlighted token (yellow default), e.g. a status/species chip.
+- **`NeoStatCard`** — uppercase header strip over a big value + caption, header/body color pair with a hard divider between them.
+
+### Application to SmartCrop screens
+
+- **Feed cells:** wrap each smart-cropped image in a `NeoBox` (ink border + hard shadow). Character name as a chunky title; status/species as `NeoPill`s (e.g. Green = Alive, Coral = Dead).
+- **Detail screen:** full image in a `NeoBox`; metadata rendered as `NeoStatCard`s / pill rows (species, gender, origin, episode count).
+- **Loading / error / empty states:** cream ground with ink-bordered blocks; retry via `NeoButton`.
+- **Debug saliency overlay:** draw the crop box in `Ink`, the heatmap tinted, consistent with the flat palette.
 
 ---
 
@@ -162,6 +207,7 @@ Pipeline:
 
 ### Milestone 2: Feed UI + Paging
 
+- [ ] Port neo-brutalist theme from `eat-please-app` (Theme.kt + NeoComponents.kt, Fredoka fonts)
 - [ ] HomeViewModel with paging state (page number, loading, end-of-list)
 - [ ] LazyColumn/LazyVerticalGrid with character image cells
 - [ ] Coil image loading in each cell
