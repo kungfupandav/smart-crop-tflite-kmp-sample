@@ -1,0 +1,61 @@
+name: iosApp
+# Regenerate the Xcode project after editing this file:
+#   brew install xcodegen        # one-time
+#   cd iosApp && xcodegen generate
+# The generated iosApp.xcodeproj is git-ignored — this spec is the source of truth.
+options:
+  bundleIdPrefix: com.smartcrop
+  deploymentTarget:
+    iOS: "15.0"
+targets:
+  iosApp:
+    type: application
+    platform: iOS
+    sources:
+      - path: iosApp
+    info:
+      path: iosApp/Info.plist
+      properties:
+        # Required by Compose Multiplatform for high-refresh-rate (ProMotion) devices.
+        CADisableMinimumFrameDurationOnPhone: true
+        UILaunchScreen: {}
+        UIApplicationSupportsIndirectInputEvents: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.smartcrop.iosApp
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        SWIFT_VERSION: "5.0"
+        # embedAndSignAppleFrameworkForXcode copies the framework here, keyed by
+        # the active configuration and SDK, so this path is arch/config-agnostic.
+        FRAMEWORK_SEARCH_PATHS:
+          - $(inherited)
+          - $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
+    preBuildScripts:
+      - name: "Build Kotlin framework + Compose resources"
+        basedOnDependencyAnalysis: false
+        script: |
+          set -e
+          cd "$SRCROOT/.."
+
+          # This project's Gradle toolchain requires JDK 21+ (Metro DI).
+          if ! "${JAVA_HOME:-/nonexistent}/bin/java" -version 2>&1 | grep -q 'version "21'; then
+            if home=$(/usr/libexec/java_home -v 21 2>/dev/null); then
+              export JAVA_HOME="$home"
+            elif [ -d "/Applications/Android Studio.app/Contents/jbr/Contents/Home" ]; then
+              export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+            else
+              echo "error: JDK 21 not found. Set JAVA_HOME to a JDK 21 install." >&2
+              exit 1
+            fi
+          fi
+
+          # Builds the framework for the current CONFIGURATION/SDK/ARCH and copies
+          # the Compose resources (fonts) into the app bundle. Both read Xcode's
+          # environment variables.
+          ./gradlew --no-daemon \
+            :shared:embedAndSignAppleFrameworkForXcode \
+            :shared:syncComposeResourcesForIos
+    dependencies:
+      - framework: $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/shared.framework
+        embed: false
+        codeSign: false
