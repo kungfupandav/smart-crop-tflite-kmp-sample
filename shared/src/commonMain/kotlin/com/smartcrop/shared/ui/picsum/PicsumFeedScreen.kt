@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.smartcrop.shared.domain.model.CropRegion
 import com.smartcrop.shared.ui.LocalAppGraph
 import com.smartcrop.shared.ui.components.PhotoCard
 import com.smartcrop.shared.ui.theme.NeoButton
@@ -38,7 +39,9 @@ fun PicsumFeedScreen(
     onPhotoClick: (String) -> Unit,
 ) {
     val appGraph = LocalAppGraph.current
-    val viewModel: PicsumFeedViewModel = viewModel { PicsumFeedViewModel(appGraph.photoRepository) }
+    val viewModel: PicsumFeedViewModel = viewModel {
+        PicsumFeedViewModel(appGraph.photoRepository, appGraph.cropRegionRepository)
+    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
 
@@ -111,6 +114,7 @@ fun PicsumFeedScreen(
                         PhotoCard(
                             photo = photo,
                             onClick = { onPhotoClick(photo.id) },
+                            crop = uiState.crops[photo.detailUrl()] ?: CropRegion.CENTER,
                         )
                     }
 

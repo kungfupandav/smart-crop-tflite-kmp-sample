@@ -1,7 +1,9 @@
 package com.smartcrop.shared.di
 
 import com.smartcrop.shared.data.repository.CharacterRepository
+import com.smartcrop.shared.data.repository.CropRegionRepository
 import com.smartcrop.shared.data.repository.PhotoRepository
+import com.smartcrop.shared.ml.SaliencyEngine
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.DependencyGraph
 import dev.zacsweers.metro.Provides
@@ -28,6 +30,18 @@ interface AppGraph {
 
     /** Accessor for the Picsum feed; backing [PicsumApi] shares the [HttpClient]. */
     val photoRepository: PhotoRepository
+
+    /** Smart-crop cache; runs the [SaliencyEngine] and memoizes results per URL. */
+    val cropRegionRepository: CropRegionRepository
+
+    /**
+     * The on-device saliency engine (TFLite on Android; a CENTER-crop fallback on
+     * iOS until native inference is wired). Application-scoped so its model/
+     * interpreter is loaded once.
+     */
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideSaliencyEngine(): SaliencyEngine = SaliencyEngine()
 
     /**
      * The shared Ktor client. Uses the platform's auto-discovered engine

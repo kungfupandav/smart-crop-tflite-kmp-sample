@@ -26,6 +26,10 @@ object CropCalculator {
      * @param maskHeight height of the mask in pixels (must be > 0).
      * @param targetAspectRatio desired crop `width / height` in pixel space, e.g. `16f / 9f`.
      * @param threshold saliency value at or above which a pixel counts as salient.
+     * @param minSize minimum crop size as a fraction of each image dimension `[0, 1]`.
+     *   Guards against over-zooming on tiny/distant salient objects (a finding from
+     *   the real-photo model spike); the crop is scaled up equally on both axes so
+     *   neither side falls below this. `0` disables the guard.
      * @return the computed [CropRegion], or [CropRegion.CENTER] when the input is invalid
      *   or no pixel passes the threshold.
      */
@@ -35,6 +39,7 @@ object CropCalculator {
         maskHeight: Int,
         targetAspectRatio: Float,
         threshold: Float = 0.5f,
+        minSize: Float = 0f,
     ): CropRegion {
         // Guard against invalid inputs.
         if (maskWidth <= 0 || maskHeight <= 0) return CropRegion.CENTER
@@ -88,6 +93,14 @@ object CropCalculator {
         } else if (currentRatio > normalizedRatio) {
             // Too wide for the target -> heighten.
             boxH = boxW / normalizedRatio
+        }
+
+        // Enforce a minimum crop size so tiny/distant salient objects don't
+        // over-zoom. Scale both axes by the same factor to preserve the ratio.
+        if (minSize > 0f) {
+            val scale = maxOf(1f, minSize / boxW, minSize / boxH)
+            boxW *= scale
+            boxH *= scale
         }
 
         // 4. Clamp to [0, 1]. Prefer shifting the box to stay in bounds; only

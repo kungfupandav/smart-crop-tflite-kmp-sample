@@ -3,7 +3,9 @@ package com.smartcrop.shared.ui.home
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.smartcrop.shared.data.repository.CharacterRepository
+import com.smartcrop.shared.data.repository.CropRegionRepository
 import com.smartcrop.shared.domain.model.Character
+import com.smartcrop.shared.domain.model.CropRegion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +17,8 @@ import kotlinx.coroutines.launch
  */
 data class HomeUiState(
     val characters: List<Character> = emptyList(),
+    /** Smart-crop region per character image URL; absent until inference completes. */
+    val crops: Map<String, CropRegion> = emptyMap(),
     val isLoading: Boolean = false,      // first-page load
     val isLoadingMore: Boolean = false,  // subsequent pages
     val endReached: Boolean = false,
@@ -27,6 +31,7 @@ data class HomeUiState(
  */
 class HomeViewModel(
     private val repository: CharacterRepository,
+    private val cropRegionRepository: CropRegionRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(HomeUiState())
@@ -73,6 +78,7 @@ class HomeViewModel(
                     )
                 }
                 currentPage += 1
+                computeCrops(newCharacters)
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
@@ -88,11 +94,31 @@ class HomeViewModel(
     }
 
     /**
+     * Runs saliency inference for each newly-loaded character in the background and
+     * folds the resulting crop into [HomeUiState.crops] as it arrives, so cells
+     * re-crop themselves once ready. Results are memoized by the repository.
+     */
+    private fun computeCrops(characters: List<Character>) {
+        for (character in characters) {
+            val url = character.imageUrl
+            viewModelScope.launch {
+                val region = cropRegionRepository.cropFor(url, FEED_ASPECT)
+                _uiState.update { it.copy(crops = it.crops + (url to region)) }
+            }
+        }
+    }
+
+    /**
      * Clears the current error and retries loading the page that failed.
      */
     fun retry() {
         if (isRequestInFlight) return
         _uiState.update { it.copy(error = null) }
         loadNextPage()
+    }
+
+    private companion object {
+        /** Feed cells are square, so smart-crop targets a 1:1 region. */
+        const val FEED_ASPECT = 1f
     }
 }
