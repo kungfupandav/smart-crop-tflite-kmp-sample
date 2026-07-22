@@ -1,9 +1,14 @@
 package com.smartcrop.shared.ui
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -17,6 +22,7 @@ import com.smartcrop.shared.ui.entry.EntryScreen
 import com.smartcrop.shared.ui.home.HomeScreen
 import com.smartcrop.shared.ui.picsum.PicsumDetailScreen
 import com.smartcrop.shared.ui.picsum.PicsumFeedScreen
+import com.smartcrop.shared.ui.theme.NeoColors
 import com.smartcrop.shared.ui.theme.SmartCropTheme
 import dev.zacsweers.metro.createGraph
 
@@ -46,45 +52,60 @@ fun App() {
         SmartCropTheme {
             val navController = rememberNavController()
 
-            NavHost(navController = navController, startDestination = EntryRoute) {
-                // Landing: choose a feed.
-                composable<EntryRoute> {
-                    EntryScreen(
-                        onRickAndMorty = { navController.navigate(HomeRoute) },
-                        onPicsum = { navController.navigate(PicsumFeedRoute) },
-                    )
-                }
+            // Cream fills the whole window (behind the status/navigation bars);
+            // screen content is inset to the safe area so nothing draws under the
+            // status bar, home indicator, or display cutout.
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(NeoColors.Cream),
+            ) {
+                NavHost(
+                    navController = navController,
+                    startDestination = EntryRoute,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .safeDrawingPadding(),
+                ) {
+                    // Landing: choose a feed.
+                    composable<EntryRoute> {
+                        EntryScreen(
+                            onRickAndMorty = { navController.navigate(HomeRoute) },
+                            onPicsum = { navController.navigate(PicsumFeedRoute) },
+                        )
+                    }
 
-                // --- Rick & Morty flow ---
-                composable<HomeRoute> {
-                    HomeScreen(
-                        onCharacterClick = { id ->
-                            navController.navigate(DetailRoute(characterId = id))
-                        }
-                    )
-                }
-                composable<DetailRoute> { backStackEntry ->
-                    val route = backStackEntry.toRoute<DetailRoute>()
-                    DetailScreen(
-                        characterId = route.characterId,
-                        onBack = { navController.popBackStack() }
-                    )
-                }
+                    // --- Rick & Morty flow ---
+                    composable<HomeRoute> {
+                        HomeScreen(
+                            onCharacterClick = { id ->
+                                navController.navigate(DetailRoute(characterId = id))
+                            }
+                        )
+                    }
+                    composable<DetailRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<DetailRoute>()
+                        DetailScreen(
+                            characterId = route.characterId,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
 
-                // --- Picsum flow ---
-                composable<PicsumFeedRoute> {
-                    PicsumFeedScreen(
-                        onPhotoClick = { id ->
-                            navController.navigate(PicsumDetailRoute(photoId = id))
-                        }
-                    )
-                }
-                composable<PicsumDetailRoute> { backStackEntry ->
-                    val route = backStackEntry.toRoute<PicsumDetailRoute>()
-                    PicsumDetailScreen(
-                        photoId = route.photoId,
-                        onBack = { navController.popBackStack() }
-                    )
+                    // --- Picsum flow ---
+                    composable<PicsumFeedRoute> {
+                        PicsumFeedScreen(
+                            onPhotoClick = { id ->
+                                navController.navigate(PicsumDetailRoute(photoId = id))
+                            }
+                        )
+                    }
+                    composable<PicsumDetailRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<PicsumDetailRoute>()
+                        PicsumDetailScreen(
+                            photoId = route.photoId,
+                            onBack = { navController.popBackStack() }
+                        )
+                    }
                 }
             }
         }
