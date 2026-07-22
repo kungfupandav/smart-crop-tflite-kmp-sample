@@ -42,6 +42,33 @@ hard case (odd creature on a busy background).*
 - **float32 conversion is numerically exact.** Max abs diff vs the source ONNX
   over random inputs: **0.00000**.
 
+## Real photographs (Picsum)
+
+To sanity-check beyond cartoon art, the same pipeline was run over 15 real
+photographs sampled across the [Picsum](https://picsum.photos) catalog
+(`run_spike.py --avatars <picsum-dir>`), spanning clear subjects, cluttered
+scenes, and subjectless textures.
+
+![Picsum results](results/contact_sheet_picsum.png)
+
+- **Clear subjects are localized well** — a potted cactus, an ornate door (out of
+  a whole facade), a laptop, a phone, a grape cluster, and even a small person on
+  stone steps were each isolated correctly.
+- **Focus / contrast cues work** — a phone shot with shallow depth of field was
+  picked out cleanly against the blurred background.
+- **Subjectless scenes degrade gracefully** — a river-pebble texture produced a
+  near-empty mask and confidence `0.03` (the "no salient object → `CENTER`" path).
+- **Over-zoom on tiny subjects** — the small, distant person (0.3 % salient) was
+  found but produced a very tight crop. Real photos need a **minimum-crop-size
+  guard** (e.g. don't crop below ~30–40 % of the frame) that the square cartoon
+  avatars never exercised.
+
+**Implications for the app:** the confidence-based fallback is *not optional* for
+real content, and the crop math should clamp to a minimum size to avoid
+over-zooming on small subjects. Also note `run_spike.py` resizes to a 320² square
+(matching the avatar pipeline), so non-square photos are fed slightly
+aspect-distorted; a production path should letterbox/pad to preserve aspect.
+
 ## Locked-in parameters for `SaliencyEngine`
 
 | Parameter | Value |
