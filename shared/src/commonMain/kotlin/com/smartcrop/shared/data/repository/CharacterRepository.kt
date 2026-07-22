@@ -14,6 +14,10 @@ class CharacterRepository(
         val hasMore = response.info.next != null
         return characters to hasMore
     }
+
+    suspend fun getCharacter(id: Int): Character {
+        return api.getCharacter(id).toDomain()
+    }
 }
 
 private fun CharacterDto.toDomain() = Character(

@@ -1,5 +1,6 @@
 package com.smartcrop.shared.data.api
 
+import com.smartcrop.shared.data.model.CharacterDto
 import com.smartcrop.shared.data.model.CharacterResponse
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -23,5 +24,9 @@ class RickAndMortyApi {
         return client.get("https://rickandmortyapi.com/api/character") {
             parameter("page", page)
         }.body()
+    }
+
+    suspend fun getCharacter(id: Int): CharacterDto {
+        return client.get("https://rickandmortyapi.com/api/character/$id").body()
     }
 }
