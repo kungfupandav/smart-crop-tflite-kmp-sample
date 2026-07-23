@@ -17,3 +17,6 @@
 /iosApp/Pods
 *.xcworkspace
 *.xcuserdata
+
+# Vendored TFLite C xcframework (fetch with scripts/fetch-tflitec.sh)
+/shared/nativeInterop/TensorFlowLiteC.xcframework/
