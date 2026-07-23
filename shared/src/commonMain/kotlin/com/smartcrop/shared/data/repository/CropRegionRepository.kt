@@ -8,6 +8,7 @@ import dev.zacsweers.metro.SingleIn
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -29,11 +30,16 @@ class CropRegionRepository(
     private val engine: SaliencyEngine,
 ) {
     private val cache = mutableMapOf<String, CropRegion>()
+    private val inFlight = mutableMapOf<String, CompletableDeferred<CropRegion>>()
     private val mutex = Mutex()
 
     /**
-     * Returns the smart-crop region for [imageUrl], computing it once and caching
-     * the result for the session. Falls back to [CropRegion.CENTER] on any failure.
+     * Returns the smart-crop region for [imageUrl], computing it exactly once per URL
+     * and caching the result for the session. Concurrent callers for the same URL
+     * (e.g. a feed cell and the detail overlay) join a single in-flight computation,
+     * so they always receive the *identical* crop — the model never runs twice for one
+     * image and can't hand two views slightly different (or CENTER-vs-real) results.
+     * Falls back to [CropRegion.CENTER] on failure.
      *
      * @param imageUrl the source image URL; a blank URL yields [CropRegion.CENTER]
      * @param targetAspectRatio desired width/height ratio for the crop
@@ -41,22 +47,34 @@ class CropRegionRepository(
     suspend fun cropFor(imageUrl: String, targetAspectRatio: Float = 1f): CropRegion {
         if (imageUrl.isBlank()) return CropRegion.CENTER
 
-        // Fast path: return a cached result under a short lock.
-        mutex.withLock { cache[imageUrl] }?.let { return it }
+        // Under a short lock: return the cached crop, join an in-flight computation,
+        // or claim ownership of a new one. Only the download + inference runs unlocked.
+        var join: CompletableDeferred<CropRegion>? = null
+        var own: CompletableDeferred<CropRegion>? = null
+        mutex.withLock {
+            cache[imageUrl]?.let { return it }
+            val pending = inFlight[imageUrl]
+            if (pending != null) {
+                join = pending
+            } else {
+                own = CompletableDeferred<CropRegion>().also { inFlight[imageUrl] = it }
+            }
+        }
 
-        // Compute WITHOUT holding the lock: the download runs concurrently with
-        // other URLs, and the engine already serializes the actual interpreter
-        // call internally. Holding the lock across download + inference here would
-        // serialize every image globally and block cache reads (e.g. the detail
-        // screen waiting behind a whole feed page of inferences). Two callers may
-        // race the same URL and both compute — harmless and idempotent.
+        join?.let { return it.await() }
+
+        val deferred = own!!
         val region = try {
             val bytes: ByteArray = client.get(imageUrl).body()
             engine.findSalientRegion(bytes, targetAspectRatio)
         } catch (e: Throwable) {
-            return CropRegion.CENTER // don't cache failures, so a retry can succeed
+            CropRegion.CENTER
         }
-        mutex.withLock { cache[imageUrl] = region }
+        mutex.withLock {
+            cache[imageUrl] = region
+            inFlight.remove(imageUrl)
+        }
+        deferred.complete(region) // unblock any joiners with the same result
         return region
     }
 }
