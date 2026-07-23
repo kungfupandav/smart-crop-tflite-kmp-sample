@@ -2,60 +2,70 @@ package com.smartcrop.shared.ui.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.IntOffset
 import coil3.compose.AsyncImage
 import com.smartcrop.shared.domain.model.CropRegion
 import com.smartcrop.shared.ui.theme.NeoColors
+import kotlin.math.roundToInt
 
 /**
- * Displays [imageUrl] cropped to [crop] (a normalized sub-rectangle of the source
- * image), scaled to fill this composable's bounds — the smart-crop equivalent of
- * [ContentScale.Crop], but framed on the salient region instead of the image center.
+ * Displays [imageUrl] framed on [crop] (a normalized sub-rectangle of the source
+ * image) filling this composable's bounds — the smart-crop equivalent of
+ * [ContentScale.Crop], but centered on the salient region instead of the image center.
  *
- * How it works: the full image is stretched to fill the box ([ContentScale.FillBounds]),
- * then a graphics-layer transform (pivoted top-left) scales the crop sub-rect up to
- * fill the box and offsets it into place. The FillBounds distortion is exactly
- * cancelled by the scale whenever the crop's *pixel* aspect matches the box aspect —
- * which `CropCalculator` guarantees by taking the display box aspect as its target —
- * so the visible result is undistorted. A CENTER crop (0,0,1,1) renders the whole
- * image, so this is safe to use before a real crop has been computed.
+ * The source (whose real aspect ratio is [sourceAspectRatio] = width / height) is
+ * scaled *uniformly* so the [crop] sub-rect covers the box, then positioned on the
+ * crop's focal point (clamped so the box stays covered). Because the rendered image
+ * keeps the source aspect ratio, nothing is ever stretched — a landscape photo shown
+ * in a square cell is cropped, not squished. A CENTER crop (0,0,1,1) degrades to a
+ * plain center-crop, so this is safe to use before a real crop has been computed.
  */
 @Composable
 fun SmartCropImage(
     imageUrl: String,
     crop: CropRegion,
+    sourceAspectRatio: Float,
     contentDescription: String?,
     modifier: Modifier = Modifier,
 ) {
+    val ar = if (sourceAspectRatio.isFinite() && sourceAspectRatio > 0f) sourceAspectRatio else 1f
     // Guard against degenerate crops (never divide by zero / invert).
     val cw = crop.width.coerceIn(0.0001f, 1f)
     val ch = crop.height.coerceIn(0.0001f, 1f)
+    val density = LocalDensity.current
 
     BoxWithConstraints(modifier = modifier.clipToBounds()) {
         val boxW = constraints.maxWidth.toFloat()
         val boxH = constraints.maxHeight.toFloat()
+
+        // Uniform scale so the crop sub-rect just covers the box; dispW×dispH keeps
+        // the source aspect ratio, so the rendered image is never stretched.
+        val k = maxOf(boxW / (cw * ar), boxH / ch)
+        val dispW = ar * k
+        val dispH = k
+        val focalX = crop.x + cw / 2f
+        val focalY = crop.y + ch / 2f
+        // Place the focal point at the box center, clamped so the box stays covered.
+        val offX = (boxW / 2f - focalX * dispW).coerceIn(boxW - dispW, 0f)
+        val offY = (boxH / 2f - focalY * dispH).coerceIn(boxH - dispH, 0f)
+
         AsyncImage(
             model = imageUrl,
             contentDescription = contentDescription,
-            contentScale = ContentScale.FillBounds,
+            contentScale = ContentScale.FillBounds, // dispW×dispH already matches source aspect
             modifier = Modifier
-                .fillMaxSize()
-                .graphicsLayer {
-                    transformOrigin = TransformOrigin(0f, 0f)
-                    scaleX = 1f / cw
-                    scaleY = 1f / ch
-                    translationX = -crop.x * boxW / cw
-                    translationY = -crop.y * boxH / ch
-                },
+                .requiredSize(with(density) { dispW.toDp() }, with(density) { dispH.toDp() })
+                .offset { IntOffset(offX.roundToInt(), offY.roundToInt()) },
         )
     }
 }
