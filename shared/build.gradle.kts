@@ -20,14 +20,29 @@ kotlin {
         }
     }
 
+    // Vendored TensorFlowLiteC (C API) xcframework, used by the iOS SaliencyEngine.
+    // Run `./scripts/fetch-tflitec.sh` once to download it (git-ignored).
+    val tflcXcframework = "$projectDir/nativeInterop/TensorFlowLiteC.xcframework"
     listOf(
         iosX64(),
         iosArm64(),
         iosSimulatorArm64()
-    ).forEach {
-        it.binaries.framework {
+    ).forEach { target ->
+        // Pick the matching xcframework slice for this Kotlin/Native target.
+        val slice = if (target.name == "iosArm64") "ios-arm64" else "ios-arm64_x86_64-simulator"
+        val frameworkDir = "$tflcXcframework/$slice"
+
+        target.compilations.getByName("main").cinterops.create("tflitec") {
+            defFile(project.file("src/nativeInterop/cinterop/tflitec.def"))
+            compilerOpts("-F$frameworkDir")
+        }
+
+        target.binaries.framework {
             baseName = "shared"
             isStatic = true
+            // The final link into the app also needs these (see iosApp/project.yml),
+            // but declaring them keeps Kotlin's own tooling consistent.
+            linkerOpts("-F$frameworkDir", "-framework", "TensorFlowLiteC", "-lc++")
         }
     }
 

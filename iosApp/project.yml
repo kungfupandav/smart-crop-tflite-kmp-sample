@@ -30,6 +30,11 @@ targets:
         FRAMEWORK_SEARCH_PATHS:
           - $(inherited)
           - $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)
+        # TensorFlowLiteC is C++ internally (exposed via a C API); the app must
+        # link the C++ runtime since the shared framework is static.
+        OTHER_LDFLAGS:
+          - $(inherited)
+          - -lc++
     preBuildScripts:
       - name: "Build Kotlin framework + Compose resources"
         basedOnDependencyAnalysis: false
@@ -57,5 +62,11 @@ targets:
             :shared:syncComposeResourcesForIos
     dependencies:
       - framework: $(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)/shared.framework
+        embed: false
+        codeSign: false
+      # TensorFlowLiteC is a STATIC framework (Mach-O object, no Info.plist), so it
+      # is linked into the app binary but must NOT be embedded (embedding a static
+      # framework fails validation for the missing Info.plist).
+      - framework: ../shared/nativeInterop/TensorFlowLiteC.xcframework
         embed: false
         codeSign: false

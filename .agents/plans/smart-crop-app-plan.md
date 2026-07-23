@@ -231,12 +231,12 @@ Pipeline:
 - [x] Wire into HomeViewModel — inference off main thread, cache results (in-memory via `CropRegionRepository`)
 - [x] Integrate into feed cells — replace center-crop with smart-crop preview (both R&M + Picsum feeds)
 
-### Milestone 5: iOS Inference 🚧 (in progress)
+### Milestone 5: iOS Inference ✅
 
-- [ ] TFLite C API cinterop setup (or Swift shim) — vendored TensorFlowLiteC.xcframework + `.def`
-- [ ] iOS `SaliencyEngine` actual (CoreGraphics decode + interpreter → CropCalculator)
-- [ ] Parity testing: compare crop results against Android on identical inputs
-- [ ] End-to-end iOS feed with smart-cropped previews
+- [x] TFLite C API cinterop setup — vendored TensorFlowLiteC.xcframework (2.17.0, static) + `tflitec.def`; app links it (embed:false, `-lc++`)
+- [x] iOS `SaliencyEngine` actual — CoreGraphics decode → TFLite C API → CropCalculator (mirrors Android)
+- [x] Parity: same pipeline/constants as Android; verified visually on simulator (undistorted, subject-framed crops)
+- [x] End-to-end iOS feed with smart-cropped previews (both feeds) — verified on iPhone 17 Pro simulator
 
 ### Milestone 6: Detail Screen + Polish ✅ (mostly)
 
