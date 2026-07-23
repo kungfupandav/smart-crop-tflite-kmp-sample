@@ -103,7 +103,10 @@ class PicsumFeedViewModel(
         for (photo in photos) {
             val url = photo.detailUrl()
             viewModelScope.launch {
-                val region = cropRegionRepository.cropFor(url, FEED_ASPECT)
+                // Target a 1:1 region in the (square) saliency-mask space; on the
+                // real source that maps to a rectangle with the source's own aspect
+                // ratio, which the feed cell then shows in full without stretching.
+                val region = cropRegionRepository.cropFor(url, SOURCE_ASPECT_TARGET)
                 _uiState.update { it.copy(crops = it.crops + (url to region)) }
             }
         }
@@ -117,7 +120,11 @@ class PicsumFeedViewModel(
     }
 
     private companion object {
-        /** Feed cells are square, so smart-crop targets a 1:1 region. */
-        const val FEED_ASPECT = 1f
+        /**
+         * The saliency mask is square (the source resized to 320²), so a 1:1 target
+         * yields a normalized-square crop — which on the non-square source is a
+         * rectangle with the source's own aspect ratio.
+         */
+        const val SOURCE_ASPECT_TARGET = 1f
     }
 }
