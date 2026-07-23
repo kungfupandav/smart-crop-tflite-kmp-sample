@@ -52,7 +52,6 @@ fun PhotoCard(
             SmartCropImage(
                 imageUrl = photo.detailUrl(),
                 crop = crop,
-                sourceAspectRatio = sourceAspect,
                 contentDescription = "Photo by ${photo.author}",
                 modifier = Modifier
                     .sharedImage("photo-${photo.id}")

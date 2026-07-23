@@ -51,7 +51,6 @@ fun CharacterCard(
             SmartCropImage(
                 imageUrl = character.imageUrl,
                 crop = crop,
-                sourceAspectRatio = 1f, // Rick & Morty avatars are square (300×300)
                 contentDescription = character.name,
                 modifier = Modifier
                     .sharedImage("char-${character.id}")
