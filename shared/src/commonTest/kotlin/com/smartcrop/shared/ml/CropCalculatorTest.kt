@@ -126,6 +126,29 @@ class CropCalculatorTest {
     }
 
     @Test
+    fun tinySalientObject_minSizeGuard_enlargesCrop() {
+        val w = 100
+        val h = 100
+        val mask = FloatArray(w * h) { 0f }
+        // A 4x4 salient speck near the center -> a very tight crop without a guard.
+        for (row in 48..51) {
+            for (col in 48..51) {
+                mask[row * w + col] = 1f
+            }
+        }
+
+        val noGuard = CropCalculator.computeCropRegion(mask, w, h, 1f)
+        assertTrue(noGuard.width < 0.2f, "unguarded crop is tiny: ${noGuard.width}")
+
+        // With a 0.5 minimum, neither side may fall below half the frame.
+        val guarded = CropCalculator.computeCropRegion(mask, w, h, 1f, minSize = 0.5f)
+        assertTrue(guarded.width >= 0.5f - eps, "width honors min size: ${guarded.width}")
+        assertTrue(guarded.height >= 0.5f - eps, "height honors min size: ${guarded.height}")
+        assertEquals(1f, guarded.width / guarded.height, eps) // ratio preserved
+        assertWithinBounds(guarded)
+    }
+
+    @Test
     fun nonSquareMask_accountsForPixelAspectRatio() {
         // Wide mask (200x100). A full-bright mask with target 2:1 pixel ratio
         // already matches the image, so the whole image is returned undistorted.

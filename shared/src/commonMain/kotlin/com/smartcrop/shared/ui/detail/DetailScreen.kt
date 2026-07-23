@@ -18,6 +18,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,7 +32,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.smartcrop.shared.domain.model.Character
+import com.smartcrop.shared.domain.model.CropRegion
 import com.smartcrop.shared.ui.LocalAppGraph
+import com.smartcrop.shared.ui.components.CropRegionOverlay
+import com.smartcrop.shared.ui.sharedImage
 import com.smartcrop.shared.ui.theme.NeoBox
 import com.smartcrop.shared.ui.theme.NeoButton
 import com.smartcrop.shared.ui.theme.NeoColors
@@ -42,7 +48,7 @@ fun DetailScreen(
     onBack: () -> Unit,
 ) {
     val appGraph = LocalAppGraph.current
-    val viewModel: DetailViewModel = viewModel { DetailViewModel(characterId, appGraph.characterRepository) }
+    val viewModel: DetailViewModel = viewModel { DetailViewModel(characterId, appGraph.characterRepository, appGraph.cropRegionRepository) }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Box(
@@ -70,6 +76,7 @@ fun DetailScreen(
             uiState.character != null -> {
                 DetailContent(
                     character = uiState.character!!,
+                    crop = uiState.crop,
                     onBack = onBack,
                 )
             }
@@ -80,8 +87,10 @@ fun DetailScreen(
 @Composable
 private fun DetailContent(
     character: Character,
+    crop: CropRegion?,
     onBack: () -> Unit,
 ) {
+    var showCrop by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -95,20 +104,37 @@ private fun DetailContent(
             onClick = onBack,
         )
 
-        // Full, uncropped character portrait.
+        // Full, uncropped character portrait, with an optional overlay of the
+        // smart-crop region the feed used.
         NeoBox(
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = NeoColors.Cream,
             contentPadding = PaddingValues(10.dp),
         ) {
-            AsyncImage(
-                model = character.imageUrl,
-                contentDescription = character.name,
-                contentScale = ContentScale.Fit,
+            Box(
                 modifier = Modifier
+                    .sharedImage("char-${character.id}")
                     .fillMaxWidth()
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(10.dp)),
+            ) {
+                AsyncImage(
+                    model = character.imageUrl,
+                    contentDescription = character.name,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                if (showCrop && crop != null) {
+                    CropRegionOverlay(crop, Modifier.fillMaxSize())
+                }
+            }
+        }
+
+        if (crop != null) {
+            NeoButton(
+                text = if (showCrop) "Hide smart-crop region" else "Show smart-crop region",
+                backgroundColor = NeoColors.CyanBody,
+                onClick = { showCrop = !showCrop },
             )
         }
 

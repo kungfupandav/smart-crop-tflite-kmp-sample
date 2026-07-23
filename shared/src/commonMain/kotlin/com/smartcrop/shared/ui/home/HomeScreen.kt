@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.smartcrop.shared.domain.model.CropRegion
 import com.smartcrop.shared.ui.LocalAppGraph
 import com.smartcrop.shared.ui.components.CharacterCard
 import com.smartcrop.shared.ui.theme.NeoButton
@@ -38,7 +39,9 @@ fun HomeScreen(
     onCharacterClick: (Int) -> Unit,
 ) {
     val appGraph = LocalAppGraph.current
-    val viewModel: HomeViewModel = viewModel { HomeViewModel(appGraph.characterRepository) }
+    val viewModel: HomeViewModel = viewModel {
+        HomeViewModel(appGraph.characterRepository, appGraph.cropRegionRepository)
+    }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val gridState = rememberLazyGridState()
 
@@ -111,6 +114,7 @@ fun HomeScreen(
                         CharacterCard(
                             character = character,
                             onClick = { onCharacterClick(character.id) },
+                            crop = uiState.crops[character.imageUrl] ?: CropRegion.CENTER,
                         )
                     }
 

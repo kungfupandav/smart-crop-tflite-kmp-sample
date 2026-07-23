@@ -205,52 +205,53 @@ Pipeline:
 - [x] expect/actual SaliencyEngine stubs
 - [x] CropRegion domain model
 
-### Milestone 2: Feed UI + Paging
+### Milestone 2: Feed UI + Paging ✅
 
-- [ ] Port neo-brutalist theme from `eat-please-app` (Theme.kt + NeoComponents.kt, Fredoka fonts)
-- [ ] HomeViewModel with paging state (page number, loading, end-of-list)
-- [ ] LazyColumn/LazyVerticalGrid with character image cells
-- [ ] Coil image loading in each cell
-- [ ] Infinite scroll trigger (load next page when near the bottom)
-- [ ] Center-crop placeholder (no ML yet)
-- [ ] Basic error / loading / empty states
+- [x] Port neo-brutalist theme from `eat-please-app` (Theme.kt + NeoComponents.kt, Fredoka fonts)
+- [x] HomeViewModel with paging state (page number, loading, end-of-list)
+- [x] LazyColumn/LazyVerticalGrid with character image cells
+- [x] Coil image loading in each cell
+- [x] Infinite scroll trigger (load next page when near the bottom)
+- [x] Center-crop placeholder (no ML yet)
+- [x] Basic error / loading / empty states
 
-### Milestone 3: Model Spike
+### Milestone 3: Model Spike ✅
 
-- [ ] Obtain or convert `u2netp.tflite` (verify model input/output shapes)
-- [ ] Python notebook: test model on a handful of Rick & Morty avatars
-- [ ] Lock in input size, normalization constants, threshold values
-- [ ] Test BlazeFace on the same image set as a comparison
-- [ ] Decide final model
+- [x] Obtain or convert `u2netp.tflite` (verify model input/output shapes) — converted from HF ONNX; see `tools/model-spike/`
+- [x] Python notebook: test model on a handful of Rick & Morty avatars (`run_spike.py`; also validated on real Picsum photos)
+- [x] Lock in input size, normalization constants, threshold values (320², ImageNet, threshold 0.5, minSize 0.4)
+- [x] Test BlazeFace on the same image set as a comparison — deemed unnecessary; u2netp validated on cartoon + real photos
+- [x] Decide final model → u2netp float32
 
-### Milestone 4: Android Inference
+### Milestone 4: Android Inference ✅
 
-- [ ] Android `SaliencyEngine` actual — load model, run interpreter
-- [ ] `CropCalculator` — mask → bounding box → aspect-ratio-fit (pure Kotlin, unit tests)
-- [ ] `SmartCropImage` composable — renders the cropped source rect
-- [ ] Wire into HomeViewModel — inference off main thread, cache results
-- [ ] Integrate into feed cells — replace center-crop with smart-crop preview
+- [x] Android `SaliencyEngine` actual — load model, run interpreter
+- [x] `CropCalculator` — mask → bounding box → aspect-ratio-fit (pure Kotlin, unit tests)
+- [x] `SmartCropImage` composable — renders the cropped source rect
+- [x] Wire into HomeViewModel — inference off main thread, cache results (in-memory via `CropRegionRepository`)
+- [x] Integrate into feed cells — replace center-crop with smart-crop preview (both R&M + Picsum feeds)
 
-### Milestone 5: iOS Inference
+### Milestone 5: iOS Inference 🚧 (in progress)
 
-- [ ] TFLite C API cinterop setup (or Swift shim)
-- [ ] iOS `SaliencyEngine` actual with Metal delegate
+- [ ] TFLite C API cinterop setup (or Swift shim) — vendored TensorFlowLiteC.xcframework + `.def`
+- [ ] iOS `SaliencyEngine` actual (CoreGraphics decode + interpreter → CropCalculator)
 - [ ] Parity testing: compare crop results against Android on identical inputs
 - [ ] End-to-end iOS feed with smart-cropped previews
 
-### Milestone 6: Detail Screen + Polish
+### Milestone 6: Detail Screen + Polish ✅ (mostly)
 
-- [ ] Detail screen: full image, character metadata display
-- [ ] Debug overlay toggle: saliency heatmap + crop box visualization
-- [ ] Shared-element transition from feed cell to detail image
-- [ ] Error/fallback path: if confidence is low or inference fails → graceful center-crop fallback
+- [x] Detail screen: full image, character metadata display
+- [x] Debug overlay toggle: crop-region box visualization (`CropRegionOverlay`) — saliency heatmap itself not surfaced to the UI
+- [x] Shared-element transition from feed cell to detail image
+- [x] Error/fallback path: if confidence is low or inference fails → graceful center-crop fallback (`CropCalculator` returns CENTER; min-size guard)
 
 ### Milestone 7: Performance Pass
 
 - [ ] Measure inference latency on low-end devices
 - [ ] Evaluate int8-quantized model variant
-- [ ] Tune dispatcher parallelism and prefetch distance
+- [ ] Tune dispatcher parallelism and prefetch distance (partial: inference off-main-thread, concurrent downloads, memoized cache)
 - [ ] Profile scroll performance (jank, memory)
+- [ ] Room-backed persistence of crops across sessions (DAO/entity scaffolding exists)
 
 ---
 
@@ -267,6 +268,6 @@ Pipeline:
 
 ## Open Decisions
 
-- [ ] Feed cell aspect ratio (16:9 / 2:1 / 4:3 / 1:1)
-- [ ] Android-first or both platforms in sync
-- [ ] Which milestone to tackle next
+- [x] Feed cell aspect ratio → **1:1** (square cells)
+- [x] Android-first or both platforms in sync → **Android-first**; iOS inference is Milestone 5 (in progress), iOS falls back to center-crop until then
+- [x] Which milestone to tackle next → Milestone 5 (iOS inference)

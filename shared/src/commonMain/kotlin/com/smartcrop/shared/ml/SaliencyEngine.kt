@@ -8,7 +8,7 @@ import com.smartcrop.shared.domain.model.CropRegion
  * Implementations wrap TFLite on Android and iOS to analyze images
  * and return the most salient region for smart cropping.
  */
-expect class SaliencyEngine {
+expect class SaliencyEngine() {
     /**
      * Analyze raw image bytes and return the optimal crop region.
      *
