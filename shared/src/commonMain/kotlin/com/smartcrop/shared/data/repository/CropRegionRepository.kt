@@ -41,27 +41,22 @@ class CropRegionRepository(
     suspend fun cropFor(imageUrl: String, targetAspectRatio: Float = 1f): CropRegion {
         if (imageUrl.isBlank()) return CropRegion.CENTER
 
-        // Fast path: return a cached result without doing any work.
-        mutex.withLock {
-            cache[imageUrl]?.let { return it }
-        }
+        // Fast path: return a cached result under a short lock.
+        mutex.withLock { cache[imageUrl] }?.let { return it }
 
-        return try {
-            // Hold the lock across download + inference so concurrent callers for
-            // the same URL de-duplicate onto a single computation.
-            mutex.withLock {
-                // Re-check: another caller may have populated the cache while we
-                // were waiting for the lock.
-                cache[imageUrl]?.let { return it }
-
-                val bytes: ByteArray = client.get(imageUrl).body()
-                val region = engine.findSalientRegion(bytes, targetAspectRatio)
-                cache[imageUrl] = region
-                region
-            }
+        // Compute WITHOUT holding the lock: the download runs concurrently with
+        // other URLs, and the engine already serializes the actual interpreter
+        // call internally. Holding the lock across download + inference here would
+        // serialize every image globally and block cache reads (e.g. the detail
+        // screen waiting behind a whole feed page of inferences). Two callers may
+        // race the same URL and both compute — harmless and idempotent.
+        val region = try {
+            val bytes: ByteArray = client.get(imageUrl).body()
+            engine.findSalientRegion(bytes, targetAspectRatio)
         } catch (e: Throwable) {
-            // Do not cache failures so a later retry can still succeed.
-            CropRegion.CENTER
+            return CropRegion.CENTER // don't cache failures, so a retry can succeed
         }
+        mutex.withLock { cache[imageUrl] = region }
+        return region
     }
 }

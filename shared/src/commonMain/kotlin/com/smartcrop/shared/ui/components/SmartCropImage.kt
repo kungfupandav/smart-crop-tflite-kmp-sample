@@ -1,15 +1,20 @@
 package com.smartcrop.shared.ui.components
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 import com.smartcrop.shared.domain.model.CropRegion
+import com.smartcrop.shared.ui.theme.NeoColors
 
 /**
  * Displays [imageUrl] cropped to [crop] (a normalized sub-rectangle of the source
@@ -51,6 +56,23 @@ fun SmartCropImage(
                     translationX = -crop.x * boxW / cw
                     translationY = -crop.y * boxH / ch
                 },
+        )
+    }
+}
+
+/**
+ * Draws the outline of [crop] (normalized coordinates) over the composable's bounds —
+ * used on the detail screen to visualize the smart-crop region the feed chose. Assumes
+ * this overlay is sized to exactly match the displayed (Fit) image.
+ */
+@Composable
+fun CropRegionOverlay(crop: CropRegion, modifier: Modifier = Modifier) {
+    Canvas(modifier = modifier) {
+        drawRect(
+            color = NeoColors.Coral,
+            topLeft = Offset(crop.x * size.width, crop.y * size.height),
+            size = Size(crop.width * size.width, crop.height * size.height),
+            style = Stroke(width = 6f),
         )
     }
 }

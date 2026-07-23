@@ -3,7 +3,9 @@ package com.smartcrop.shared.ui.detail
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.smartcrop.shared.data.repository.CharacterRepository
+import com.smartcrop.shared.data.repository.CropRegionRepository
 import com.smartcrop.shared.domain.model.Character
+import com.smartcrop.shared.domain.model.CropRegion
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -15,6 +17,8 @@ import kotlinx.coroutines.launch
  */
 data class DetailUiState(
     val character: Character? = null,
+    /** The smart-crop region for this character (for the detail overlay); null until loaded. */
+    val crop: CropRegion? = null,
     val isLoading: Boolean = true,
     val error: String? = null,
 )
@@ -26,6 +30,7 @@ data class DetailUiState(
 class DetailViewModel(
     private val characterId: Int,
     private val repository: CharacterRepository,
+    private val cropRegionRepository: CropRegionRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(DetailUiState())
@@ -43,6 +48,9 @@ class DetailViewModel(
                 _uiState.update {
                     it.copy(character = character, isLoading = false, error = null)
                 }
+                // Cache hit from the feed's inference; drives the crop overlay.
+                val region = cropRegionRepository.cropFor(character.imageUrl, 1f)
+                _uiState.update { it.copy(crop = region) }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(isLoading = false, error = e.message ?: "Something went wrong")

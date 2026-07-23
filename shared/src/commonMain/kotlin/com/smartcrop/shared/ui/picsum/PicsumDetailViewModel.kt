@@ -2,7 +2,9 @@ package com.smartcrop.shared.ui.picsum
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.smartcrop.shared.data.repository.CropRegionRepository
 import com.smartcrop.shared.data.repository.PhotoRepository
+import com.smartcrop.shared.domain.model.CropRegion
 import com.smartcrop.shared.domain.model.Photo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,6 +17,8 @@ import kotlinx.coroutines.launch
  */
 data class PicsumDetailUiState(
     val photo: Photo? = null,
+    /** The smart-crop region for this photo (for the detail overlay); null until loaded. */
+    val crop: CropRegion? = null,
     val isLoading: Boolean = true,
     val error: String? = null,
 )
@@ -26,6 +30,7 @@ data class PicsumDetailUiState(
 class PicsumDetailViewModel(
     private val photoId: String,
     private val repository: PhotoRepository,
+    private val cropRegionRepository: CropRegionRepository,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(PicsumDetailUiState())
@@ -43,6 +48,9 @@ class PicsumDetailViewModel(
                 _uiState.update {
                     it.copy(photo = photo, isLoading = false, error = null)
                 }
+                // Cache hit from the feed's inference; drives the crop overlay.
+                val region = cropRegionRepository.cropFor(photo.detailUrl(), 1f)
+                _uiState.update { it.copy(crop = region) }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(isLoading = false, error = e.message ?: "Something went wrong")

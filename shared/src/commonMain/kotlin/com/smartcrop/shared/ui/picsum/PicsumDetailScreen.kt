@@ -18,6 +18,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,8 +30,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.smartcrop.shared.domain.model.CropRegion
 import com.smartcrop.shared.domain.model.Photo
 import com.smartcrop.shared.ui.LocalAppGraph
+import com.smartcrop.shared.ui.components.CropRegionOverlay
 import com.smartcrop.shared.ui.sharedImage
 import com.smartcrop.shared.ui.theme.NeoBox
 import com.smartcrop.shared.ui.theme.NeoButton
@@ -44,7 +49,7 @@ fun PicsumDetailScreen(
 ) {
     val appGraph = LocalAppGraph.current
     val viewModel: PicsumDetailViewModel = viewModel {
-        PicsumDetailViewModel(photoId, appGraph.photoRepository)
+        PicsumDetailViewModel(photoId, appGraph.photoRepository, appGraph.cropRegionRepository)
     }
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
@@ -73,6 +78,7 @@ fun PicsumDetailScreen(
             uiState.photo != null -> {
                 DetailContent(
                     photo = uiState.photo!!,
+                    crop = uiState.crop,
                     onBack = onBack,
                 )
             }
@@ -83,8 +89,10 @@ fun PicsumDetailScreen(
 @Composable
 private fun DetailContent(
     photo: Photo,
+    crop: CropRegion?,
     onBack: () -> Unit,
 ) {
+    var showCrop by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -98,21 +106,37 @@ private fun DetailContent(
             onClick = onBack,
         )
 
-        // Full, uncropped photo at its native aspect ratio.
+        // Full, uncropped photo at its native aspect ratio, with an optional
+        // overlay of the smart-crop region the feed used.
         NeoBox(
             modifier = Modifier.fillMaxWidth(),
             backgroundColor = NeoColors.Cream,
             contentPadding = PaddingValues(10.dp),
         ) {
-            AsyncImage(
-                model = photo.detailUrl(),
-                contentDescription = "Photo by ${photo.author}",
-                contentScale = ContentScale.Fit,
+            Box(
                 modifier = Modifier
                     .sharedImage("photo-${photo.id}")
                     .fillMaxWidth()
                     .aspectRatio(photo.width.toFloat() / photo.height)
                     .clip(RoundedCornerShape(10.dp)),
+            ) {
+                AsyncImage(
+                    model = photo.detailUrl(),
+                    contentDescription = "Photo by ${photo.author}",
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier.fillMaxSize(),
+                )
+                if (showCrop && crop != null) {
+                    CropRegionOverlay(crop, Modifier.fillMaxSize())
+                }
+            }
+        }
+
+        if (crop != null) {
+            NeoButton(
+                text = if (showCrop) "Hide smart-crop region" else "Show smart-crop region",
+                backgroundColor = NeoColors.CyanBody,
+                onClick = { showCrop = !showCrop },
             )
         }
 
