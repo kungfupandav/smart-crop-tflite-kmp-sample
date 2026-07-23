@@ -1,5 +1,7 @@
 package com.smartcrop.shared.ui
 
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -35,6 +37,7 @@ val LocalAppGraph = staticCompositionLocalOf<AppGraph> {
     error("AppGraph not provided — wrap content in App()")
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun App() {
     // Build the DI graph once for the app's lifetime.
@@ -60,51 +63,70 @@ fun App() {
                     .fillMaxSize()
                     .background(NeoColors.Cream),
             ) {
-                NavHost(
-                    navController = navController,
-                    startDestination = EntryRoute,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .safeDrawingPadding(),
-                ) {
-                    // Landing: choose a feed.
-                    composable<EntryRoute> {
-                        EntryScreen(
-                            onRickAndMorty = { navController.navigate(HomeRoute) },
-                            onPicsum = { navController.navigate(PicsumFeedRoute) },
-                        )
-                    }
-
-                    // --- Rick & Morty flow ---
-                    composable<HomeRoute> {
-                        HomeScreen(
-                            onCharacterClick = { id ->
-                                navController.navigate(DetailRoute(characterId = id))
+                // A single SharedTransitionLayout hosts the whole NavHost so images can
+                // morph across destinations. The scope is threaded down via
+                // LocalSharedTransitionScope, and each destination's AnimatedContentScope
+                // via LocalNavAnimatedVisibilityScope, so leaf composables opt in with
+                // Modifier.sharedImage(key) without signature changes.
+                SharedTransitionLayout {
+                    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+                        NavHost(
+                            navController = navController,
+                            startDestination = EntryRoute,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .safeDrawingPadding(),
+                        ) {
+                            // Landing: choose a feed.
+                            composable<EntryRoute> {
+                                CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
+                                    EntryScreen(
+                                        onRickAndMorty = { navController.navigate(HomeRoute) },
+                                        onPicsum = { navController.navigate(PicsumFeedRoute) },
+                                    )
+                                }
                             }
-                        )
-                    }
-                    composable<DetailRoute> { backStackEntry ->
-                        val route = backStackEntry.toRoute<DetailRoute>()
-                        DetailScreen(
-                            characterId = route.characterId,
-                            onBack = { navController.popBackStack() }
-                        )
-                    }
 
-                    // --- Picsum flow ---
-                    composable<PicsumFeedRoute> {
-                        PicsumFeedScreen(
-                            onPhotoClick = { id ->
-                                navController.navigate(PicsumDetailRoute(photoId = id))
+                            // --- Rick & Morty flow ---
+                            composable<HomeRoute> {
+                                CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
+                                    HomeScreen(
+                                        onCharacterClick = { id ->
+                                            navController.navigate(DetailRoute(characterId = id))
+                                        }
+                                    )
+                                }
                             }
-                        )
-                    }
-                    composable<PicsumDetailRoute> { backStackEntry ->
-                        val route = backStackEntry.toRoute<PicsumDetailRoute>()
-                        PicsumDetailScreen(
-                            photoId = route.photoId,
-                            onBack = { navController.popBackStack() }
-                        )
+                            composable<DetailRoute> { backStackEntry ->
+                                val route = backStackEntry.toRoute<DetailRoute>()
+                                CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
+                                    DetailScreen(
+                                        characterId = route.characterId,
+                                        onBack = { navController.popBackStack() }
+                                    )
+                                }
+                            }
+
+                            // --- Picsum flow ---
+                            composable<PicsumFeedRoute> {
+                                CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
+                                    PicsumFeedScreen(
+                                        onPhotoClick = { id ->
+                                            navController.navigate(PicsumDetailRoute(photoId = id))
+                                        }
+                                    )
+                                }
+                            }
+                            composable<PicsumDetailRoute> { backStackEntry ->
+                                val route = backStackEntry.toRoute<PicsumDetailRoute>()
+                                CompositionLocalProvider(LocalNavAnimatedVisibilityScope provides this) {
+                                    PicsumDetailScreen(
+                                        photoId = route.photoId,
+                                        onBack = { navController.popBackStack() }
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
             }

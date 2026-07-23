@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.smartcrop.shared.domain.model.Character
 import com.smartcrop.shared.ui.LocalAppGraph
+import com.smartcrop.shared.ui.sharedImage
 import com.smartcrop.shared.ui.theme.NeoBox
 import com.smartcrop.shared.ui.theme.NeoButton
 import com.smartcrop.shared.ui.theme.NeoColors
@@ -106,6 +107,7 @@ private fun DetailContent(
                 contentDescription = character.name,
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
+                    .sharedImage("char-${character.id}")
                     .fillMaxWidth()
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(10.dp)),

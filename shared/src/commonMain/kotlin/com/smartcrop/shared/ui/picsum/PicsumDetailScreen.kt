@@ -29,6 +29,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.smartcrop.shared.domain.model.Photo
 import com.smartcrop.shared.ui.LocalAppGraph
+import com.smartcrop.shared.ui.sharedImage
 import com.smartcrop.shared.ui.theme.NeoBox
 import com.smartcrop.shared.ui.theme.NeoButton
 import com.smartcrop.shared.ui.theme.NeoColors
@@ -108,6 +109,7 @@ private fun DetailContent(
                 contentDescription = "Photo by ${photo.author}",
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
+                    .sharedImage("photo-${photo.id}")
                     .fillMaxWidth()
                     .aspectRatio(photo.width.toFloat() / photo.height)
                     .clip(RoundedCornerShape(10.dp)),

@@ -15,6 +15,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.smartcrop.shared.domain.model.CropRegion
 import com.smartcrop.shared.domain.model.Photo
+import com.smartcrop.shared.ui.sharedImage
 import com.smartcrop.shared.ui.theme.NeoBox
 import com.smartcrop.shared.ui.theme.NeoColors
 import com.smartcrop.shared.ui.theme.NeoPill
@@ -49,6 +50,7 @@ fun PhotoCard(
                 crop = crop,
                 contentDescription = "Photo by ${photo.author}",
                 modifier = Modifier
+                    .sharedImage("photo-${photo.id}")
                     .fillMaxWidth()
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(10.dp)),
