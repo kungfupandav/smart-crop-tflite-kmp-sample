@@ -25,6 +25,8 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.smartcrop.iosApp
         ENABLE_USER_SCRIPT_SANDBOXING: NO
         SWIFT_VERSION: "5.0"
+        # App icon from iosApp/Assets.xcassets (AppIcon.appiconset).
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         # embedAndSignAppleFrameworkForXcode copies the framework here, keyed by
         # the active configuration and SDK, so this path is arch/config-agnostic.
         FRAMEWORK_SEARCH_PATHS:
