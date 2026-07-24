@@ -1,24 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Monochrome layer for Android 13+ themed icons: the crop marks + sparkle
-     silhouette. Its color is replaced by the system's theme tint. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="130"
-    android:viewportHeight="130">
+    android:viewportWidth="160"
+    android:viewportHeight="160">
     <path
         android:strokeColor="#000000"
         android:strokeWidth="7"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M38,20 V92 H110" />
+        android:pathData="M53,35 V107 H125" />
     <path
         android:strokeColor="#000000"
         android:strokeWidth="7"
         android:strokeLineCap="round"
         android:strokeLineJoin="round"
-        android:pathData="M20,38 H92 V110" />
+        android:pathData="M35,53 H107 V125" />
     <path
         android:fillColor="#000000"
-        android:pathData="M65,48 C65,60.75 69.25,65 82,65 C69.25,65 65,69.25 65,82 C65,69.25 60.75,65 48,65 C60.75,65 65,60.75 65,48 Z" />
+        android:pathData="M80,63 C80,75.75 84.25,80 97,80 C84.25,80 80,84.25 80,97 C80,84.25 75.75,80 63,80 C75.75,80 80,75.75 80,63 Z" />
 </vector>
