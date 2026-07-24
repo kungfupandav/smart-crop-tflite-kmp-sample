@@ -35,6 +35,10 @@ fun PhotoCard(
     modifier: Modifier = Modifier,
     crop: CropRegion = CropRegion.CENTER,
 ) {
+    val sourceAspect = photo.width.toFloat() / photo.height
+    // The cell takes the crop region's own aspect ratio (full width, dynamic
+    // height) so the whole crop shows undistorted rather than being cover-cropped.
+    val cellAspect = if (crop.height > 0f) sourceAspect * (crop.width / crop.height) else sourceAspect
     NeoBox(
         modifier = modifier,
         backgroundColor = NeoColors.Cream,
@@ -52,7 +56,7 @@ fun PhotoCard(
                 modifier = Modifier
                     .sharedImage("photo-${photo.id}")
                     .fillMaxWidth()
-                    .aspectRatio(1f)
+                    .aspectRatio(cellAspect)
                     .clip(RoundedCornerShape(10.dp)),
             )
             Text(

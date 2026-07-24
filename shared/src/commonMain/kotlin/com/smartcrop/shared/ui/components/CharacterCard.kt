@@ -35,6 +35,9 @@ fun CharacterCard(
     modifier: Modifier = Modifier,
     crop: CropRegion = CropRegion.CENTER,
 ) {
+    // Rick & Morty avatars are square (300×300); the cell takes the crop's own
+    // aspect ratio (full width, dynamic height) so the whole crop shows undistorted.
+    val cellAspect = if (crop.height > 0f) crop.width / crop.height else 1f
     NeoBox(
         modifier = modifier,
         backgroundColor = NeoColors.Cream,
@@ -52,7 +55,7 @@ fun CharacterCard(
                 modifier = Modifier
                     .sharedImage("char-${character.id}")
                     .fillMaxWidth()
-                    .aspectRatio(1f)
+                    .aspectRatio(cellAspect)
                     .clip(RoundedCornerShape(10.dp)),
             )
             Text(

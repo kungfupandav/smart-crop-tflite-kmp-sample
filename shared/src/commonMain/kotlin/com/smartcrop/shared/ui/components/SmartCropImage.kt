@@ -17,17 +17,17 @@ import com.smartcrop.shared.domain.model.CropRegion
 import com.smartcrop.shared.ui.theme.NeoColors
 
 /**
- * Displays [imageUrl] cropped to [crop] (a normalized sub-rectangle of the source
- * image), scaled to fill this composable's bounds — the smart-crop equivalent of
- * [ContentScale.Crop], but framed on the salient region instead of the image center.
+ * Displays exactly [crop] (a normalized sub-rectangle of the source image) filling
+ * this composable's bounds — the smart-crop equivalent of [ContentScale.Crop], framed
+ * on the salient region instead of the image center.
  *
- * How it works: the full image is stretched to fill the box ([ContentScale.FillBounds]),
- * then a graphics-layer transform (pivoted top-left) scales the crop sub-rect up to
- * fill the box and offsets it into place. The FillBounds distortion is exactly
- * cancelled by the scale whenever the crop's *pixel* aspect matches the box aspect —
- * which `CropCalculator` guarantees by taking the display box aspect as its target —
- * so the visible result is undistorted. A CENTER crop (0,0,1,1) renders the whole
- * image, so this is safe to use before a real crop has been computed.
+ * The full image is drawn to fill the box, then a graphics-layer transform (pivoted
+ * top-left) scales the crop sub-rect up to fill the box and slides it into place, so
+ * the box shows precisely `[crop.x, crop.x+width] × [crop.y, crop.y+height]`. This is
+ * undistorted as long as the box's aspect ratio equals the crop's *pixel* aspect ratio
+ * — which the caller guarantees by giving the cell that aspect (see PhotoCard /
+ * CharacterCard). A CENTER crop (0,0,1,1) renders the whole image, so this is safe to
+ * use before a real crop has been computed.
  */
 @Composable
 fun SmartCropImage(
